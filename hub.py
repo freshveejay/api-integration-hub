@@ -4,7 +4,7 @@ Unified interface for AI and SaaS APIs
 """
 
 import os
-from typing import Optional, Dict, Any, List
+from typing import Dict, List
 import httpx
 
 
@@ -12,10 +12,7 @@ class AIClient:
     """Unified AI API client supporting OpenAI and Anthropic"""
 
     def __init__(
-        self,
-        openai_key: str = None,
-        anthropic_key: str = None,
-        timeout: float = 30.0
+        self, openai_key: str = None, anthropic_key: str = None, timeout: float = 30.0
     ):
         self.openai_key = openai_key or os.getenv("OPENAI_API_KEY")
         self.anthropic_key = anthropic_key or os.getenv("ANTHROPIC_API_KEY")
@@ -28,7 +25,7 @@ class AIClient:
         model: str = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Get completion from AI provider.
@@ -45,21 +42,18 @@ class AIClient:
         """
         if provider == "anthropic":
             return self._anthropic_complete(
-                prompt, model or "claude-3-sonnet-20240229",
-                max_tokens, temperature, **kwargs
+                prompt,
+                model or "claude-3-sonnet-20240229",
+                max_tokens,
+                temperature,
+                **kwargs,
             )
         return self._openai_complete(
-            prompt, model or "gpt-4-turbo",
-            max_tokens, temperature, **kwargs
+            prompt, model or "gpt-4-turbo", max_tokens, temperature, **kwargs
         )
 
     def _openai_complete(
-        self,
-        prompt: str,
-        model: str,
-        max_tokens: int,
-        temperature: float,
-        **kwargs
+        self, prompt: str, model: str, max_tokens: int, temperature: float, **kwargs
     ) -> str:
         if not self.openai_key:
             raise ValueError("OpenAI API key not configured")
@@ -69,26 +63,21 @@ class AIClient:
                 "https://api.openai.com/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {self.openai_key}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": model,
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": max_tokens,
                     "temperature": temperature,
-                    **kwargs
-                }
+                    **kwargs,
+                },
             )
             response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"]
 
     def _anthropic_complete(
-        self,
-        prompt: str,
-        model: str,
-        max_tokens: int,
-        temperature: float,
-        **kwargs
+        self, prompt: str, model: str, max_tokens: int, temperature: float, **kwargs
     ) -> str:
         if not self.anthropic_key:
             raise ValueError("Anthropic API key not configured")
@@ -99,23 +88,19 @@ class AIClient:
                 headers={
                     "x-api-key": self.anthropic_key,
                     "anthropic-version": "2024-01-01",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": model,
                     "max_tokens": max_tokens,
                     "messages": [{"role": "user", "content": prompt}],
-                    **kwargs
-                }
+                    **kwargs,
+                },
             )
             response.raise_for_status()
             return response.json()["content"][0]["text"]
 
-    def embed(
-        self,
-        text: str,
-        model: str = "text-embedding-3-small"
-    ) -> List[float]:
+    def embed(self, text: str, model: str = "text-embedding-3-small") -> List[float]:
         """Generate embeddings for text"""
         if not self.openai_key:
             raise ValueError("OpenAI API key not configured")
@@ -125,17 +110,15 @@ class AIClient:
                 "https://api.openai.com/v1/embeddings",
                 headers={
                     "Authorization": f"Bearer {self.openai_key}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                json={"model": model, "input": text}
+                json={"model": model, "input": text},
             )
             response.raise_for_status()
             return response.json()["data"][0]["embedding"]
 
     def embed_batch(
-        self,
-        texts: List[str],
-        model: str = "text-embedding-3-small"
+        self, texts: List[str], model: str = "text-embedding-3-small"
     ) -> List[List[float]]:
         """Generate embeddings for multiple texts"""
         if not self.openai_key:
@@ -146,9 +129,9 @@ class AIClient:
                 "https://api.openai.com/v1/embeddings",
                 headers={
                     "Authorization": f"Bearer {self.openai_key}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                json={"model": model, "input": texts}
+                json={"model": model, "input": texts},
             )
             response.raise_for_status()
             return [item["embedding"] for item in response.json()["data"]]
@@ -172,18 +155,14 @@ class SlackClient:
                 f"{self.base_url}/{endpoint}",
                 headers={
                     "Authorization": f"Bearer {self.token}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                **kwargs
+                **kwargs,
             )
             return response.json()
 
     def send_message(
-        self,
-        channel: str,
-        text: str,
-        blocks: List[Dict] = None,
-        **kwargs
+        self, channel: str, text: str, blocks: List[Dict] = None, **kwargs
     ) -> Dict:
         """Send a message to a channel"""
         payload = {"channel": channel, "text": text, **kwargs}
@@ -221,23 +200,17 @@ class NotionClient:
                 headers={
                     "Authorization": f"Bearer {self.token}",
                     "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                **kwargs
+                **kwargs,
             )
             return response.json()
 
     def create_page(
-        self,
-        database_id: str,
-        properties: Dict,
-        children: List[Dict] = None
+        self, database_id: str, properties: Dict, children: List[Dict] = None
     ) -> Dict:
         """Create a page in a database"""
-        payload = {
-            "parent": {"database_id": database_id},
-            "properties": properties
-        }
+        payload = {"parent": {"database_id": database_id}, "properties": properties}
         if children:
             payload["children"] = children
         return self._request("POST", "pages", json=payload)
@@ -247,7 +220,7 @@ class NotionClient:
         database_id: str,
         filter: Dict = None,
         sorts: List[Dict] = None,
-        page_size: int = 100
+        page_size: int = 100,
     ) -> List[Dict]:
         """Query a database"""
         payload = {"page_size": page_size}
@@ -282,18 +255,14 @@ class AirtableClient:
                 f"{self.base_url}/{path}",
                 headers={
                     "Authorization": f"Bearer {self.token}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                **kwargs
+                **kwargs,
             )
             return response.json()
 
     def list_records(
-        self,
-        base_id: str,
-        table_name: str,
-        view: str = None,
-        max_records: int = 100
+        self, base_id: str, table_name: str, view: str = None, max_records: int = 100
     ) -> List[Dict]:
         """List records in a table"""
         params = {"maxRecords": max_records}
@@ -303,39 +272,19 @@ class AirtableClient:
         result = self._request("GET", f"{base_id}/{table_name}", params=params)
         return result.get("records", [])
 
-    def create_record(
-        self,
-        base_id: str,
-        table_name: str,
-        fields: Dict
-    ) -> Dict:
+    def create_record(self, base_id: str, table_name: str, fields: Dict) -> Dict:
         """Create a record"""
-        return self._request(
-            "POST",
-            f"{base_id}/{table_name}",
-            json={"fields": fields}
-        )
+        return self._request("POST", f"{base_id}/{table_name}", json={"fields": fields})
 
     def update_record(
-        self,
-        base_id: str,
-        table_name: str,
-        record_id: str,
-        fields: Dict
+        self, base_id: str, table_name: str, record_id: str, fields: Dict
     ) -> Dict:
         """Update a record"""
         return self._request(
-            "PATCH",
-            f"{base_id}/{table_name}/{record_id}",
-            json={"fields": fields}
+            "PATCH", f"{base_id}/{table_name}/{record_id}", json={"fields": fields}
         )
 
-    def delete_record(
-        self,
-        base_id: str,
-        table_name: str,
-        record_id: str
-    ) -> Dict:
+    def delete_record(self, base_id: str, table_name: str, record_id: str) -> Dict:
         """Delete a record"""
         return self._request("DELETE", f"{base_id}/{table_name}/{record_id}")
 
@@ -356,7 +305,7 @@ class APIHub:
             "anthropic": bool(os.getenv("ANTHROPIC_API_KEY")),
             "slack": bool(os.getenv("SLACK_BOT_TOKEN")),
             "notion": bool(os.getenv("NOTION_API_KEY")),
-            "airtable": bool(os.getenv("AIRTABLE_API_KEY"))
+            "airtable": bool(os.getenv("AIRTABLE_API_KEY")),
         }
 
 
